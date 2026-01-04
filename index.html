@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAMS - Final Pro Dashboard</title>
+    <link rel="stylesheet" href="index.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+</head>
+<body>
+    <div class="sidebar">
+        <h2>SAMS AI</h2>
+        <ul>
+            <li onclick="filterTable('All')">Dashboard</li>
+            <li onclick="filterTable('Critical')">Critical List</li>
+            <li onclick="filterTable('Warning')">Warning List</li>
+        </ul>
+    </div>
+    <div class="main-content">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h1>Student Performance Dashboard</h1>
+        </header>
+
+        <div class="upload-area">
+            <p style="margin-bottom:10px;">Drag and Drop or browse <strong>file</strong></p>
+            <input type="file" id="file_input" accept=".xlsx, .xls">
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card card-total" onclick="filterTable('All')"><h3>Total</h3><div class="count" id="c-total">0</div></div>
+            <div class="stat-card card-safe" onclick="filterTable('Safe')"><h3>Safe</h3><div class="count" id="c-safe">0</div></div>
+            <div class="stat-card card-warning" onclick="filterTable('Warning')"><h3>Warning</h3><div class="count" id="c-warning">0</div></div>
+            <div class="stat-card card-critical" onclick="filterTable('Critical')"><h3>Critical</h3><div class="count" id="c-critical">0</div></div>
+        </div>
+
+        <div class="table-container">
+            <h3 id="table-title">All Records</h3>
+            <table id="main-table">
+                <thead>
+                    <tr><th>Student Name</th><th>Department</th><th>CGPA</th><th>Attendance</th><th>Status</th></tr>
+                </thead>
+                <tbody id="table-body">
+                    <tr><td colspan="5" style="text-align:center; padding: 30px; color: #999;">Awaiting Excel Upload...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let fullData = [];
+
+        document.getElementById('file_input').addEventListener('change', function(e) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const workbook = XLSX.read(new Uint8Array(event.target.result), {type: 'array'});
+                
+                // FIX: Specifically look for the "Student Data" sheet, or the 2nd sheet
+                let targetSheet = workbook.Sheets["Student Data"];
+                if(!targetSheet) targetSheet = workbook.Sheets[workbook.SheetNames[1]]; // Try 2nd sheet
+                if(!targetSheet) targetSheet = workbook.Sheets[workbook.SheetNames[0]]; // Fallback to 1st
+                
+                // Skip the title rows (Week #01)
+                const json = XLSX.utils.sheet_to_json(targetSheet, {range: 2, defval: ""});
+                
+                fullData = json.filter(r => r['Student Name']);
+                renderStats();
+                filterTable('All');
+            };
+            reader.readAsArrayBuffer(e.target.files[0]);
+        });
+
+        function renderStats() {
+            const counts = { All: fullData.length, Safe: 0, Warning: 0, Critical: 0 };
+            fullData.forEach(r => {
+                const s = (r['Status'] || "").trim();
+                if(counts.hasOwnProperty(s)) counts[s]++;
+            });
+            document.getElementById('c-total').innerText = counts.All;
+            document.getElementById('c-safe').innerText = counts.Safe;
+            document.getElementById('c-warning').innerText = counts.Warning;
+            document.getElementById('c-critical').innerText = counts.Critical;
+        }
+
+        function filterTable(filter) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = "";
+            document.getElementById('table-title').innerText = filter + " Records";
+
+            const displayList = filter === 'All' ? fullData : fullData.filter(r => (r['Status'] || "").trim() === filter);
+
+            displayList.forEach(row => {
+                const tr = document.createElement('tr');
+                // Handle the leading space in your specific Excel column for Attendance
+                const attendance = row[' Attendance (%)'] || row['Attendance (%)'] || "0";
+                const status = (row['Status'] || "Safe").trim();
+
+                tr.innerHTML = `
+                    <td><strong>${row['Student Name']}</strong></td>
+                    <td>${row['Department']}</td>
+                    <td>${row['CGPA']}</td>
+                    <td>${attendance}%</td>
+                    <td><span class="badge ${status.toLowerCase()}">${status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>
