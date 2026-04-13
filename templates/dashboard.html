@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SAMS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dashboard-body">
+    <div class="navbar">
+        <div class="navbar-brand">SAMS AI</div>
+        <div class="navbar-right">
+            <span class="nav-user">👤 {{ username }}</span>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="welcome-banner">
+            <h1>Welcome back, <strong>{{ username }}</strong>! 👋</h1>
+            <p>You are now logged in to the Student Attendance Management System.</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dash-card">
+                <div class="dash-card-icon">📊</div>
+                <h3>Student Performance</h3>
+                <p>Upload and analyse student CGPA and attendance data in real time.</p>
+                <a href="/" class="btn btn-primary btn-sm">Open Dashboard</a>
+            </div>
+
+            <div class="dash-card">
+                <div class="dash-card-icon">⚠️</div>
+                <h3>Critical Alerts</h3>
+                <p>View students who are at risk based on attendance and academic performance.</p>
+                <a href="/" class="btn btn-primary btn-sm">View Alerts</a>
+            </div>
+
+            <div class="dash-card">
+                <div class="dash-card-icon">📁</div>
+                <h3>Upload Data</h3>
+                <p>Import student records from an Excel file (.xlsx) to populate the dashboard.</p>
+                <a href="/" class="btn btn-primary btn-sm">Upload File</a>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h4>ℹ️ Session Info</h4>
+            <p>You are logged in as <strong>{{ username }}</strong>. Your session is active and secure. Click <em>Logout</em> in the navigation bar when you are done.</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-hide flash messages after 4 seconds
+        setTimeout(function() {
+            document.querySelectorAll('.alert').forEach(function(el) {
+                el.style.opacity = '0';
+                el.style.transition = 'opacity 0.5s';
+                setTimeout(function() { el.remove(); }, 500);
+            });
+        }, 4000);
+    </script>
+</body>
+</html>
